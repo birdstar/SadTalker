@@ -47,7 +47,9 @@ Init = False
 preprocess_model = None
 audio_to_coeff = None
 animate_from_coeff = None
-first_coeff_path, crop_pic_path, crop_info = None
+first_coeff_path = None
+crop_pic_path = None
+crop_info = None
 async def run_inference_async(driven_audio, source_image, enhan, output):
     if torch.cuda.is_available():
         devi = "cuda"
