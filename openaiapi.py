@@ -5,9 +5,20 @@ from fastapi import FastAPI,BackgroundTasks
 from fastapi.responses import PlainTextResponse
 import subprocess
 import asyncio
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
 
 async def run_process_async(command):
     process = await asyncio.create_subprocess_shell(
