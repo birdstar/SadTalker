@@ -20,6 +20,9 @@ async def run_process_async(command):
 
 @app.get("/process/{name}")
 async def process_audio(name: str):
+    if not os.path.exists("/tmp/"+name+".wav"):
+        return PlainTextResponse(content=f"Error: file not exist!", status_code=500)
+
     command = f"python inference.py --driven_audio /tmp/{name}.wav --source_image demo/wangpeng.png --enhancer gfpgan --output {name}"
     print(command)
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
