@@ -1,11 +1,12 @@
 from fastapi import FastAPI, File, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse,StreamingResponse
 import os
 from fastapi import FastAPI,BackgroundTasks
 from fastapi.responses import PlainTextResponse
 import subprocess
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
+import io
 
 app = FastAPI()
 
@@ -47,6 +48,12 @@ async def download_video(video_name: str):
     video_path = f"./results/{video_name}"+".mp4"
 
     if os.path.exists(video_path):
-        return FileResponse(video_path, media_type="video/mp4", filename=video_name+".mp4")
+        # return FileResponse(video_path, media_type="video/mp4", filename=video_name+".mp4")
+        # 打开视频文件（这里假设视频文件名为 "video.mp4"）
+        with open(video_path, mode="rb") as video_file:
+            video_bytes = video_file.read()
+
+        # 创建一个流式响应对象，将视频内容作为流返回给客户端
+        return StreamingResponse(io.BytesIO(video_bytes), media_type="video/mp4")
     else:
         return Response(content="Video not found", status_code=404)
