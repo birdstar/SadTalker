@@ -22,18 +22,16 @@ async def run_process_async(command):
 async def process_audio(name: str):
     if not os.path.exists("/tmp/"+name+".wav"):
         return PlainTextResponse(content=f"Error: file not exist!", status_code=500)
-
     command = f"python inference.py --driven_audio /tmp/{name}.wav --source_image demo/wangpeng.png --enhancer gfpgan --output {name}"
     print(command)
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = process.communicate()
-    print("output:",output)
-    print("error:",error)
-
-    if process.returncode == 0:
+    return_code, stdout, stderr = await run_process_async(command)
+    print("return_code:", return_code)
+    print("error:", stderr)
+    print("stdout:", stdout)
+    if return_code == 0:
         return PlainTextResponse(content="Process completed successfully")
     else:
-        return PlainTextResponse(content=f"Error: {error.decode()}", status_code=500)
+        return PlainTextResponse(content=f"Error: {stderr.decode()}", status_code=500)
 
 
 @app.get("/video/{video_name}")
