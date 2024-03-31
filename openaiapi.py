@@ -4,8 +4,19 @@ import os
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 import subprocess
+import asyncio
 
 app = FastAPI()
+
+
+async def run_process_async(command):
+    process = await asyncio.create_subprocess_shell(
+        command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    return process.returncode, stdout, stderr
 
 @app.get("/process/{name}")
 async def process_audio(name: str):
@@ -22,11 +33,11 @@ async def process_audio(name: str):
         return PlainTextResponse(content=f"Error: {error.decode()}", status_code=500)
 
 
-@app.get("/download_video/{video_name}")
+@app.get("/video/{video_name}")
 async def download_video(video_name: str):
     video_path = f"./results/{video_name}"+".mp4"
 
     if os.path.exists(video_path):
-        return FileResponse(video_path, media_type="video/mp4", filename=video_name)
+        return FileResponse(video_path, media_type="video/mp4", filename=video_name+".mp4")
     else:
         return Response(content="Video not found", status_code=404)
