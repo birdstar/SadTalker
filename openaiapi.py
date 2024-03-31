@@ -1,3 +1,6 @@
+from fastapi import FastAPI, File, Response
+from fastapi.responses import FileResponse
+import os
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 import subprocess
@@ -17,3 +20,13 @@ async def process_audio(name: str):
         return PlainTextResponse(content="Process completed successfully")
     else:
         return PlainTextResponse(content=f"Error: {error.decode()}", status_code=500)
+
+
+@app.get("/download_video/{video_name}")
+async def download_video(video_name: str):
+    video_path = f"./results/{video_name}"+".mp4"
+
+    if os.path.exists(video_path):
+        return FileResponse(video_path, media_type="video/mp4", filename=video_name)
+    else:
+        return Response(content="Video not found", status_code=404)
