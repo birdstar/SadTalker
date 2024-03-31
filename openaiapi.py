@@ -8,6 +8,19 @@ import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 import io
 
+import shutil
+import torch
+from time import  strftime
+import os, sys, time
+from argparse import ArgumentParser
+
+from src.utils.preprocess import CropAndExtract
+from src.test_audio2coeff import Audio2Coeff
+from src.facerender.animate import AnimateFromCoeff
+from src.generate_batch import get_data
+from src.generate_facerender_batch import get_facerender_data
+from src.utils.init_path import init_path
+
 app = FastAPI()
 
 origins = [
@@ -30,6 +43,93 @@ async def run_process_async(command):
     stdout, stderr = await process.communicate()
     return process.returncode, stdout, stderr
 
+Init = False
+preprocess_model = None
+audio_to_coeff = None
+animate_from_coeff = None
+first_coeff_path, crop_pic_path, crop_info = None
+async def run_inference_async(driven_audio, source_image, enhan, output):
+    if torch.cuda.is_available():
+        devi = "cuda"
+    else:
+        devi = "cpu"
+    pic_path = source_image
+    audio_path = driven_audio
+    enhancer = enhan
+    # save_dir = os.path.join(args.result_dir, strftime("%Y_%m_%d_%H.%M.%S"))
+    save_dir = os.path.join("./results", output)
+    os.makedirs(save_dir, exist_ok=True)
+    pose_style = 0
+    device = devi
+    batch_size = 2
+    input_yaw_list = None
+    input_pitch_list = None
+    input_roll_list = None
+    ref_eyeblink = None
+    ref_pose = None
+    checkpoint_dir = './checkpoints'
+    size = 256
+    # current_root_path = os.path.split(sys.argv[0])[0]
+    current_root_path = os.path.dirname(os.path.abspath(__file__))
+    old_version = False
+    preprocess = 'crop'
+    still = False
+    expression_scale = 1
+    background_enhancer = None
+
+    ref_pose_coeff_path = None
+    ref_eyeblink_coeff_path = None
+
+    sadtalker_paths = init_path(checkpoint_dir, os.path.join(current_root_path, 'src/config'), size,
+                                old_version,  preprocess)
+
+    # crop image and extract 3dmm from image
+    first_frame_dir = os.path.join(save_dir, 'first_frame_dir')
+    os.makedirs(first_frame_dir, exist_ok=True)
+
+    global Init
+    global preprocess_model
+    global audio_to_coeff
+    global animate_from_coeff
+    global first_coeff_path, crop_pic_path, crop_info
+    if not Init:
+        preprocess_model = CropAndExtract(sadtalker_paths, device)
+
+        audio_to_coeff = Audio2Coeff(sadtalker_paths, device)
+
+        animate_from_coeff = AnimateFromCoeff(sadtalker_paths, device)
+
+        print('3DMM Extraction for source image')
+        first_coeff_path, crop_pic_path, crop_info = preprocess_model.generate(pic_path, first_frame_dir,
+                                                                                preprocess,
+                                                                               source_image_flag=True,
+                                                                               pic_size=size)
+        if first_coeff_path is None:
+            print("Can't get the coeffs of the input")
+            return
+        Init = True
+
+
+    # audio2ceoff
+    batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=still)
+    coeff_path = audio_to_coeff.generate(batch, save_dir, pose_style, ref_pose_coeff_path)
+
+    # coeff2video
+    data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path,
+                               batch_size, input_yaw_list, input_pitch_list, input_roll_list,
+                               expression_scale=expression_scale, still_mode=still,
+                               preprocess=preprocess, size=size)
+
+    result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info, \
+                                         enhancer=enhancer, background_enhancer=background_enhancer,
+                                         preprocess=preprocess, img_size=size)
+
+    shutil.move(result, save_dir + '.mp4')
+    print('The generated video is named:', save_dir + '.mp4')
+
+    shutil.rmtree(save_dir)
+
+
 @app.get("/process/{name}")
 async def process_audio(name: str, background_tasks: BackgroundTasks):
     if not os.path.exists(f"/tmp/{name}.wav"):
@@ -38,7 +138,13 @@ async def process_audio(name: str, background_tasks: BackgroundTasks):
     command = f"python inference.py --driven_audio /tmp/{name}.wav --source_image demo/wangpeng.png --enhancer gfpgan --output {name}"
     print(command)
 
-    background_tasks.add_task(run_process_async, command)
+    driven_audio = f"/tmp/{name}.wav"
+    source_image = "demo/wangpeng.png"
+    enhancer = "gfpgan"
+    output = name
+
+
+    background_tasks.add_task(run_inference_async, driven_audio, source_image, enhancer, output)
 
     return PlainTextResponse(content="Processing started in the background.")
 
