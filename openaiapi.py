@@ -134,8 +134,8 @@ async def run_inference_async(driven_audio, source_image, enhan, output):
 
 @app.get("/process/{name}")
 async def process_audio(name: str, background_tasks: BackgroundTasks):
-    save_dir = os.path.join("./results", name)
-    if not os.path.exists(save_dir):
+    video_path = f"./results/{name}" + ".mp4"
+    if os.path.exists(video_path):
         return PlainTextResponse(content=f"Error: file already exist!", status_code=500)
 
     command = f"python inference.py --driven_audio /tmp/{name}.wav --source_image demo/wangpeng.png --enhancer gfpgan --output {name}"
