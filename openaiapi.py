@@ -170,6 +170,9 @@ async def download_video(video_name: str):
     else:
         return Response(content="Video not found", status_code=404)
 
+def run_inference_async_threaded(driven_audio, source_image, enhancer, output):
+    run_inference_async(driven_audio, source_image, enhancer, output)
+
 @app.post("/upload/")
 async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     fileMainName = file.filename.split(".")[0]
@@ -198,7 +201,7 @@ async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File
     # await loop.run_in_executor(None, run_inference_async, driven_audio, source_image, enhancer, output)
     # await run_inference_async(driven_audio, source_image, enhancer, output)
 
-    t = threading.Thread(target=run_inference_async, args=(driven_audio, source_image, enhancer, output))
+    t = threading.Thread(target=run_inference_async_threaded, args=(driven_audio, source_image, enhancer, output))
     t.start()
 
     return {"filename": file.filename, "file_path": file_path}
