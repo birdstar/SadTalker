@@ -193,7 +193,8 @@ async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File
     output = fileMainName
 
     # background_tasks.add_task(run_inference_async, driven_audio, source_image, enhancer, output)
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, run_inference_async, driven_audio, source_image, enhancer, output)
+    # loop = asyncio.get_event_loop()
+    # await loop.run_in_executor(None, run_inference_async, driven_audio, source_image, enhancer, output)
+    await run_inference_async(driven_audio, source_image, enhancer, output)
 
     return {"filename": file.filename, "file_path": file_path}
