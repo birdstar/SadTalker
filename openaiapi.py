@@ -170,7 +170,7 @@ async def download_video(video_name: str):
         return Response(content="Video not found", status_code=404)
 
 @app.post("/upload/")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     fileMainName = file.filename.split(".")[0]
 
     video_path = f"./results/{fileMainName}" + ".mp4"
@@ -192,8 +192,7 @@ async def upload_file(file: UploadFile = File(...)):
     enhancer = "gfpgan"
     output = fileMainName
 
-    background_process = multiprocessing.Process(target=run_inference_async, args=(driven_audio, source_image, enhancer, output))
-    background_process.start()
+    background_tasks.add_task(run_inference_async, driven_audio, source_image, enhancer, output)
 
     # url = 'https://40.73.97.134:58001/process/'+fileMainName
     # print(url)
