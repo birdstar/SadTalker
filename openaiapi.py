@@ -112,7 +112,7 @@ def run_inference_async(driven_audio, source_image, enhan, output):
         if first_coeff_path is None:
             print("Can't get the coeffs of the input")
             return
-        Init = True
+        Init = False
 
 
     # audio2ceoff
