@@ -52,7 +52,7 @@ animate_from_coeff = None
 first_coeff_path = None
 crop_pic_path = None
 crop_info = None
-async def run_inference_async(driven_audio, source_image, enhan, output):
+def run_inference_async(driven_audio, source_image, enhan, output):
     print("run_inference_async:",driven_audio, source_image, enhan, output)
     if torch.cuda.is_available():
         devi = "cuda"
@@ -203,5 +203,7 @@ async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File
 
     t = threading.Thread(target=run_inference_async_threaded, args=(driven_audio, source_image, enhancer, output))
     t.start()
+
+    t.join()
 
     return {"filename": file.filename, "file_path": file_path}
