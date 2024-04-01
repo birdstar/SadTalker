@@ -183,7 +183,7 @@ async def upload_file(file: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    url = 'https://127.0.0.1:8001/process/'+fileMainName
+    url = 'https://40.73.97.134:58001/process/'+fileMainName
     print(url)
     try:
         response = requests.get(url, verify=False)
