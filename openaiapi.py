@@ -61,7 +61,7 @@ def run_inference_async(driven_audio, source_image, enhan, output):
     elif cudanumber == 1:
         cudanumber = 0
     if torch.cuda.is_available():
-        devi = "cuda:"+cudanumber
+        devi = "cuda:"+str(cudanumber)
     else:
         devi = "cpu"
     pic_path = source_image
