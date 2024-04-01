@@ -20,7 +20,7 @@ from src.facerender.animate import AnimateFromCoeff
 from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
-import requests
+import multiprocessing
 
 app = FastAPI()
 
@@ -183,17 +183,28 @@ async def upload_file(file: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    url = 'https://40.73.97.134:58001/process/'+fileMainName
-    print(url)
-    try:
-        response = requests.get(url, verify=False)
-        if response.status_code == 200:
-            print("Request successful!")
-            print(response.text)  # 输出响应内容
-        else:
-            print("Request failed with status code:", response.status_code)
-    except requests.exceptions.RequestException as e:
-        print("An error occurred:", e)
+    command = f"python inference.py --driven_audio /tmp/{fileMainName}.wav --source_image demo/wangpeng.png --enhancer gfpgan --output {fileMainName}"
+    print(command)
+
+    driven_audio = f"/tmp/{fileMainName}.wav"
+    source_image = "demo/wangpeng.png"
+    enhancer = "gfpgan"
+    output = fileMainName
+
+    background_process = multiprocessing.Process(target=run_inference_async, args=(driven_audio, source_image, enhancer, output))
+    background_process.start()
+
+    # url = 'https://40.73.97.134:58001/process/'+fileMainName
+    # print(url)
+    # try:
+    #     response = requests.get(url, verify=False)
+    #     if response.status_code == 200:
+    #         print("Request successful!")
+    #         print(response.text)  # 输出响应内容
+    #     else:
+    #         print("Request failed with status code:", response.status_code)
+    # except requests.exceptions.RequestException as e:
+    #     print("An error occurred:", e)
 
 
     return {"filename": file.filename, "file_path": file_path}
