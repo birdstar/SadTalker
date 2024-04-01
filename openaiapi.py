@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, Response
+from fastapi import FastAPI, File, Response, UploadFile
 from fastapi.responses import FileResponse,StreamingResponse
 import os
 from fastapi import FastAPI,BackgroundTasks
@@ -166,3 +166,14 @@ async def download_video(video_name: str):
         return StreamingResponse(io.BytesIO(video_bytes), media_type="video/mp4")
     else:
         return Response(content="Video not found", status_code=404)
+
+@app.post("/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    # 确保文件保存在 tmp 目录中
+    upload_folder = "/tmp"
+    file_path = os.path.join(upload_folder, file.filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"filename": file.filename, "file_path": file_path}
