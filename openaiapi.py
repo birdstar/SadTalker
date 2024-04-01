@@ -21,6 +21,7 @@ from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 import multiprocessing
+import threading
 
 app = FastAPI()
 
@@ -195,6 +196,9 @@ async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File
     # background_tasks.add_task(run_inference_async, driven_audio, source_image, enhancer, output)
     # loop = asyncio.get_event_loop()
     # await loop.run_in_executor(None, run_inference_async, driven_audio, source_image, enhancer, output)
-    await run_inference_async(driven_audio, source_image, enhancer, output)
+    # await run_inference_async(driven_audio, source_image, enhancer, output)
+
+    t = threading.Thread(target=run_inference_async, args=(driven_audio, source_image, enhancer, output))
+    t.start()
 
     return {"filename": file.filename, "file_path": file_path}
