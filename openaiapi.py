@@ -20,6 +20,7 @@ from src.facerender.animate import AnimateFromCoeff
 from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
+import requests
 
 app = FastAPI()
 
@@ -169,11 +170,30 @@ async def download_video(video_name: str):
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
+    fileMainName = file.filename.split(".")[0]
+
+    video_path = f"./results/{fileMainName}" + ".mp4"
+    if os.path.exists(video_path):
+        return PlainTextResponse(content=f"Error: file already exist!", status_code=500)
+
     # 确保文件保存在 tmp 目录中
     upload_folder = "/tmp"
     file_path = os.path.join(upload_folder, file.filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    url = 'https://127.0.0.1:8001/process/'+fileMainName
+    print(url)
+    try:
+        response = requests.get(url, verify=False)
+        if response.status_code == 200:
+            print("Request successful!")
+            print(response.text)  # 输出响应内容
+        else:
+            print("Request failed with status code:", response.status_code)
+    except requests.exceptions.RequestException as e:
+        print("An error occurred:", e)
+
 
     return {"filename": file.filename, "file_path": file_path}
