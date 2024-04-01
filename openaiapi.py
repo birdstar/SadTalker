@@ -131,7 +131,7 @@ async def run_inference_async(driven_audio, source_image, enhan, output):
     shutil.move(result, save_dir + '.mp4')
     print('The generated video is named:', save_dir + '.mp4')
 
-    # shutil.rmtree(save_dir)
+    shutil.rmtree(save_dir)
 
 
 @app.get("/process/{name}")
