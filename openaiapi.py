@@ -52,10 +52,16 @@ animate_from_coeff = None
 first_coeff_path = None
 crop_pic_path = None
 crop_info = None
+cudanumber = 0
 def run_inference_async(driven_audio, source_image, enhan, output):
     print("run_inference_async:",driven_audio, source_image, enhan, output)
+    global  cudanumber
+    if cudanumber == 0:
+        cudanumber = 1
+    elif cudanumber == 1:
+        cudanumber = 0
     if torch.cuda.is_available():
-        devi = "cuda"
+        devi = "cuda:"+cudanumber
     else:
         devi = "cpu"
     pic_path = source_image
